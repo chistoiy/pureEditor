@@ -653,6 +653,15 @@ class _EditorPageState extends State<EditorPage> with TickerProviderStateMixin {
             textColor: textColor,
             isDark: isDark,
           ),
+          _buildToolDivider(isDark),
+          _buildToolButton(
+            icon: Icons.code,
+            label: 'MD',
+            onPressed: () =>
+                _showMarkdownSheet(editorProvider, textColor, isDark),
+            textColor: textColor,
+            isDark: isDark,
+          ),
         ],
       ),
     );
@@ -739,6 +748,236 @@ class _EditorPageState extends State<EditorPage> with TickerProviderStateMixin {
           ),
         );
       },
+    );
+  }
+
+  void _showMarkdownSheet(
+    EditorProvider editorProvider,
+    Color textColor,
+    bool isDark,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return SafeArea(
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Markdown 语法',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: GridView.count(
+                    crossAxisCount: 4,
+                    padding: const EdgeInsets.all(16),
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    children: [
+                      _buildMdButton(
+                        icon: Icons.title,
+                        label: '标题',
+                        onTap: () {
+                          editorProvider.insertText('# ');
+                          Navigator.pop(context);
+                        },
+                        isDark: isDark,
+                      ),
+                      _buildMdButton(
+                        icon: Icons.title,
+                        label: '二级标题',
+                        onTap: () {
+                          editorProvider.insertText('## ');
+                          Navigator.pop(context);
+                        },
+                        isDark: isDark,
+                      ),
+                      _buildMdButton(
+                        icon: Icons.title,
+                        label: '三级标题',
+                        onTap: () {
+                          editorProvider.insertText('### ');
+                          Navigator.pop(context);
+                        },
+                        isDark: isDark,
+                      ),
+                      _buildMdButton(
+                        icon: Icons.format_bold,
+                        label: '粗体',
+                        onTap: () {
+                          editorProvider.insertText('****');
+                          Navigator.pop(context);
+                        },
+                        isDark: isDark,
+                      ),
+                      _buildMdButton(
+                        icon: Icons.format_italic,
+                        label: '斜体',
+                        onTap: () {
+                          editorProvider.insertText('**');
+                          Navigator.pop(context);
+                        },
+                        isDark: isDark,
+                      ),
+                      _buildMdButton(
+                        icon: Icons.strikethrough_s,
+                        label: '删除线',
+                        onTap: () {
+                          editorProvider.insertText('~~~~');
+                          Navigator.pop(context);
+                        },
+                        isDark: isDark,
+                      ),
+                      _buildMdButton(
+                        icon: Icons.code,
+                        label: '行内代码',
+                        onTap: () {
+                          editorProvider.insertText('``');
+                          Navigator.pop(context);
+                        },
+                        isDark: isDark,
+                      ),
+                      _buildMdButton(
+                        icon: Icons.data_object,
+                        label: '代码块',
+                        onTap: () {
+                          editorProvider.insertText('```\n\n```');
+                          Navigator.pop(context);
+                        },
+                        isDark: isDark,
+                      ),
+                      _buildMdButton(
+                        icon: Icons.format_quote,
+                        label: '引用',
+                        onTap: () {
+                          editorProvider.insertText('> ');
+                          Navigator.pop(context);
+                        },
+                        isDark: isDark,
+                      ),
+                      _buildMdButton(
+                        icon: Icons.link,
+                        label: '链接',
+                        onTap: () {
+                          editorProvider.insertText('[]()');
+                          Navigator.pop(context);
+                        },
+                        isDark: isDark,
+                      ),
+                      _buildMdButton(
+                        icon: Icons.image,
+                        label: '图片',
+                        onTap: () {
+                          editorProvider.insertText('![]()');
+                          Navigator.pop(context);
+                        },
+                        isDark: isDark,
+                      ),
+                      _buildMdButton(
+                        icon: Icons.horizontal_rule,
+                        label: '分割线',
+                        onTap: () {
+                          editorProvider.insertText('\n---\n');
+                          Navigator.pop(context);
+                        },
+                        isDark: isDark,
+                      ),
+                      _buildMdButton(
+                        icon: Icons.checklist,
+                        label: '任务列表',
+                        onTap: () {
+                          editorProvider.insertText('- [ ] ');
+                          Navigator.pop(context);
+                        },
+                        isDark: isDark,
+                      ),
+                      _buildMdButton(
+                        icon: Icons.table_chart,
+                        label: '表格',
+                        onTap: () {
+                          editorProvider.insertText(
+                            '\n| 列1 | 列2 | 列3 |\n| --- | --- | --- |\n| 内容 | 内容 | 内容 |\n',
+                          );
+                          Navigator.pop(context);
+                        },
+                        isDark: isDark,
+                      ),
+                      _buildMdButton(
+                        icon: Icons.functions,
+                        label: '公式',
+                        onTap: () {
+                          editorProvider.insertText('\$\$\n\n\$\$');
+                          Navigator.pop(context);
+                        },
+                        isDark: isDark,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMdButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF2A2A2A) : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 24,
+              color: isDark ? AppTheme.darkPrimary : AppTheme.lightPrimary,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: isDark
+                    ? AppTheme.darkTextPrimary
+                    : AppTheme.lightTextPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
