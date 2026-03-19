@@ -9,6 +9,7 @@ import 'package:pure_editor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:pure_editor/providers/settings_provider.dart';
 import 'package:pure_editor/providers/document_provider.dart';
+import 'package:intl/intl.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -210,9 +211,58 @@ class FolderPage extends StatelessWidget {
   }
 }
 
-class HistoryPage extends StatelessWidget {
+class HistoryPage extends StatefulWidget {
   final String? documentId;
   const HistoryPage({super.key, this.documentId});
+
+  @override
+  State<HistoryPage> createState() => _HistoryPageState();
+}
+
+class _HistoryPageState extends State<HistoryPage> {
+  List<Map<String, dynamic>> _versions = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVersions();
+  }
+
+  Future<void> _loadVersions() async {
+    // 模拟加载历史版本
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    setState(() {
+      _versions = [
+        {
+          'id': '1',
+          'createdAt': DateTime.now().subtract(const Duration(hours: 1)),
+          'wordCount': 1250,
+          'type': '自动保存',
+        },
+        {
+          'id': '2',
+          'createdAt': DateTime.now().subtract(const Duration(hours: 3)),
+          'wordCount': 1180,
+          'type': '手动保存',
+        },
+        {
+          'id': '3',
+          'createdAt': DateTime.now().subtract(const Duration(days: 1)),
+          'wordCount': 1050,
+          'type': '自动保存',
+        },
+        {
+          'id': '4',
+          'createdAt': DateTime.now().subtract(const Duration(days: 2)),
+          'wordCount': 980,
+          'type': '自动保存',
+        },
+      ];
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -224,6 +274,9 @@ class HistoryPage extends StatelessWidget {
     final textColor = isDark
         ? AppTheme.darkTextPrimary
         : AppTheme.lightTextPrimary;
+    final secondaryColor = isDark
+        ? AppTheme.darkTextSecondary
+        : AppTheme.lightTextSecondary;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -235,8 +288,275 @@ class HistoryPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text('历史版本', style: TextStyle(color: textColor)),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.delete_outline, color: textColor),
+            onPressed: () => _showClearHistoryDialog(),
+            tooltip: '清理历史',
+          ),
+        ],
       ),
-      body: const Center(child: Text('历史版本功能开发中...')),
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+                color: isDark ? AppTheme.darkPrimary : AppTheme.lightPrimary,
+              ),
+            )
+          : _versions.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.history,
+                    size: 64,
+                    color: secondaryColor.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('暂无历史版本', style: TextStyle(color: secondaryColor)),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _versions.length,
+              itemBuilder: (context, index) {
+                final version = _versions[index];
+                return _buildVersionCard(
+                  version,
+                  textColor,
+                  secondaryColor,
+                  isDark,
+                );
+              },
+            ),
+    );
+  }
+
+  Widget _buildVersionCard(
+    Map<String, dynamic> version,
+    Color textColor,
+    Color secondaryColor,
+    bool isDark,
+  ) {
+    final createdAt = version['createdAt'] as DateTime;
+    final dateFormat = DateFormat('yyyy-MM-dd HH:mm');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: (isDark ? AppTheme.darkPrimary : AppTheme.lightPrimary)
+                .withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            Icons.history,
+            color: isDark ? AppTheme.darkPrimary : AppTheme.lightPrimary,
+          ),
+        ),
+        title: Text(
+          dateFormat.format(createdAt),
+          style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
+        ),
+        subtitle: Row(
+          children: [
+            Text(
+              '${version['wordCount']}字',
+              style: TextStyle(color: secondaryColor, fontSize: 12),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: (isDark ? AppTheme.darkPrimary : AppTheme.lightPrimary)
+                    .withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                version['type'],
+                style: TextStyle(
+                  color: isDark ? AppTheme.darkPrimary : AppTheme.lightPrimary,
+                  fontSize: 10,
+                ),
+              ),
+            ),
+          ],
+        ),
+        trailing: PopupMenuButton<String>(
+          icon: Icon(Icons.more_vert, color: secondaryColor),
+          onSelected: (value) => _handleVersionAction(value, version),
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'view',
+              child: ListTile(
+                leading: Icon(Icons.visibility),
+                title: Text('查看'),
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'restore',
+              child: ListTile(leading: Icon(Icons.restore), title: Text('恢复')),
+            ),
+            const PopupMenuItem(
+              value: 'export',
+              child: ListTile(
+                leading: Icon(Icons.import_export),
+                title: Text('导出'),
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'delete',
+              child: ListTile(leading: Icon(Icons.delete), title: Text('删除')),
+            ),
+          ],
+        ),
+        onTap: () => _viewVersion(version),
+      ),
+    );
+  }
+
+  void _viewVersion(Map<String, dynamic> version) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('版本内容预览'),
+          content: const SizedBox(
+            width: double.maxFinite,
+            height: 300,
+            child: SingleChildScrollView(child: Text('这是历史版本的内容预览...')),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('关闭'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _restoreVersion(version);
+              },
+              child: const Text('恢复此版本'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _handleVersionAction(String action, Map<String, dynamic> version) {
+    switch (action) {
+      case 'view':
+        _viewVersion(version);
+        break;
+      case 'restore':
+        _restoreVersion(version);
+        break;
+      case 'export':
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('导出功能开发中...')));
+        break;
+      case 'delete':
+        _deleteVersion(version);
+        break;
+    }
+  }
+
+  void _restoreVersion(Map<String, dynamic> version) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('恢复版本'),
+          content: const Text('确定要恢复到此版本吗？当前内容将被替换。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('取消'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('已恢复到选定版本')));
+              },
+              child: const Text('确定'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteVersion(Map<String, dynamic> version) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('删除版本'),
+          content: const Text('确定要删除此历史版本吗？此操作不可撤销。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('取消'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _versions.remove(version);
+                });
+                Navigator.pop(context);
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('已删除历史版本')));
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('删除'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showClearHistoryDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('清理历史版本'),
+          content: const Text('确定要清理所有历史版本吗？此操作不可撤销。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('取消'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _versions.clear();
+                });
+                Navigator.pop(context);
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('已清理所有历史版本')));
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('清理'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
